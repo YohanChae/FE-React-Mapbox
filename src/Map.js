@@ -1,5 +1,5 @@
+import React, { useRef, useEffect, useState } from "react";
 import mapbox from "mapbox-gl";
-import React, { useEffect, useRef, useState } from "react";
 
 // Your token on here
 mapbox.accessToken = "";
@@ -18,7 +18,49 @@ const Mapbox = () => {
       center: [lng, lat],
       zoom: zoom
     });
-  }, []);
+
+    // Add navigation control (the +/- zoom buttons)
+    map.addControl(new mapbox.NavigationControl(), "top-right");
+
+    map.on("move", () => {
+      setLng(map.getCenter().lng.toFixed(4));
+      setLat(map.getCenter().lat.toFixed(4));
+      setZoom(map.getZoom().toFixed(2));
+    });
+
+    let geoJsonData = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [127, 35]
+          }
+        }
+      ]
+    };
+    map.on("load", function() {
+      map.addSource("source-id", {
+        type: "geojson",
+        data: geoJsonData
+      });
+
+      // Add a symbol layer
+      map.addLayer({
+        id: "points",
+        type: "circle",
+        source: "source-id",
+        paint: {
+          "circle-radius": 5,
+          "circle-color": "rgb(255, 0, 0)"
+        }
+      });
+    });
+
+    // Clean up on unmount
+    return () => map.remove();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
